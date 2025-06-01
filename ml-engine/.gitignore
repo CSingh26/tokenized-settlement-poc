@@ -15,4 +15,5 @@ venv/
 *.log
 *.tmp
 
-
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
