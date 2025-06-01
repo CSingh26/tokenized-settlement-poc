@@ -1,23 +1,31 @@
+#Imports
 from fastapi import FastAPI
 from pydantic import BaseModel
 import numpy as np
-from sklearn.ensemble import IsolationForest
+import pandas as pd
+import joblib
+
+#Load trained model
+model = joblib.load("trainedModels/XGBoost.pkl")
 
 app = FastAPI()
 
-# Simulated training data
-model = IsolationForest(contamination=0.1)
-model.fit([[100], [200], [150], [130], [170]])
-
+#Input schema
 class TxnData(BaseModel):
-    amount: float
+    amt: float
+    assest: str  
 
 @app.post("/score")
 def score(txn: TxnData):
-    X = np.array([[txn.amount]])
-    score = model.decision_function(X)[0]
-    anomaly = model.predict(X)[0] == -1
+    valid_assets = {"BOND", "USD", "FX"}
+    if txn.assest.upper() not in valid_assets:
+        return {"error": f"Invalid asset type. Valid types: {', '.join(valid_assets)}"}
+
+    X = pd.DataFrame([[txn.amt]], columns=["amount"])
+    pred = model.predict(X)[0]
+    prob = model.predict_proba(X)[0][1]
+
     return {
-        "risk_score": float(score),       # ✅ convert from np.float64
-        "is_anomaly": bool(anomaly)       # ✅ convert from np.bool_
+        "isFraud": bool(pred),
+        "fraudProbability": round(float(prob), 4)
     }
