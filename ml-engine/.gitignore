@@ -15,7 +15,4 @@ venv/
 *.log
 *.tmp
 
-# Data files
-*.csv
-*.tsv
-data/
+
