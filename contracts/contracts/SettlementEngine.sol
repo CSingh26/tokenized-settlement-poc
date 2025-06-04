@@ -10,6 +10,7 @@ interface IsAssetToken {
 contract SettlementEngine is AccessControl{
     address public fraudOracle;
     mapping(bytes32 => bool) public flaggedTxns;
+    mapping(bytes32 => uint256) public settlementTime;
 
     event SettlementInialized(bytes32 txnId, address from, address to, uint256 amount);
     event SettlementFinalized(bytes32 txnId);
@@ -21,6 +22,11 @@ contract SettlementEngine is AccessControl{
 
     modifier onlyOracle() {
         require(msg.sender == fraudOracle, "Only orcale");
+        _;
+    }
+
+    modifier notTimeLocked(bytes32 txnId) {
+        require(block.timestamp >= settlementTime[txnId], "Settlement is time locked");
         _;
     }
 
@@ -51,10 +57,16 @@ contract SettlementEngine is AccessControl{
         address to,
         uint256 amount,
         bytes32 txnId
-    ) external {
+    ) external notTimeLocked(txnId){
         require(!flaggedTxns[txnId], "Transaction flagged as fraud");
         
         IsAssetToken(token).transfer(from, to, amount);
         emit SettlementFinalized(txnId);
     }
+
+    function setSettlementTime(bytes32 txnId, uint256 unlockTime) external onlyOracle {
+        settlementTime[txnId] = unlockTime;
+
+    }
+
 }
