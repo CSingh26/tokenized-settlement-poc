@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import "./AccessControl.sol";
+
 interface IsAssetToken {
     function transfer(address from, address to, uint256 amount) external returns (bool);
 }
 
-contract SettlementEngine {
+contract SettlementEngine is AccessControl{
     address public fraudOracle;
     mapping(bytes32 => bool) public flaggedTxns;
 
@@ -13,7 +15,7 @@ contract SettlementEngine {
     event SettlementFinalized(bytes32 txnId);
     event FraudFlagged(bytes32 txnId);
 
-    constructor(address _fraudOracle) {
+    constructor(address _fraudOracle) AccessControl(msg.sender) {
         fraudOracle = _fraudOracle;
     }
 
@@ -28,7 +30,11 @@ contract SettlementEngine {
         address to,
         uint256 amount,
         bytes32 txnId
-    ) external {
+    ) external 
+        notBlacklisted(from)
+        notBlacklisted(to)
+        onlyWhitelisted(from)
+        onlyWhitelisted(to) {
         emit SettlementInialized(txnId, from, to, amount);
     } 
 
