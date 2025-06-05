@@ -27,8 +27,8 @@ async function main() {
   console.log("Users whitelisted");
 
   // Mint and approve tokens
-  const mintTx = await token.transfer(user1.address, 1000);
-  await mintTx.wait();
+  await token.mint(deployer.address, 2000);  // Mint to deployer
+  await token.transfer(user1.address, 1000); // Then transfer to user1
   const approveTx = await token.connect(user1).approve(engineAddress, 1000);
   await approveTx.wait();
   console.log("Tokens minted and approved");
